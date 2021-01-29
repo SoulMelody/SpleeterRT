@@ -7,6 +7,9 @@ extern "C"
 {
 #include "Spleeter4Stems.h"
 }
+#include <unistd.h>
+#include <sys/types.h>
+#include <pwd.h>
 enum { PARAM_ORDER, PARAM__MAX };
 const char paramName[PARAM__MAX][2][12] =
 {
@@ -16,18 +19,7 @@ const float paramValueRange[PARAM__MAX][5] =
 {
 	{ 0.0f, 3.0f, 0.0f, 1.0f, 1.0f }
 };
-#include <userenv.h>  // GetUserProfileDirectory() (link with userenv)
 const int BUFLEN = 512;
-BOOL getCurrentUserDir(char* buf, DWORD buflen)
-{
-	HANDLE hToken;
-	if (!OpenProcessToken(GetCurrentProcess(), TOKEN_READ, &hToken))
-		return FALSE;
-	if (!GetUserProfileDirectory(hToken, buf, &buflen))
-		return FALSE;
-	CloseHandle(hToken);
-	return TRUE;
-}
 class MS5_1AI : public AudioProcessor, public AudioProcessorValueTreeState::Listener
 {
 public:
@@ -42,15 +34,18 @@ public:
 			treeState.addParameterListener(paramName[i][0], this);
 		fs = 44100;
 		order = 0;
-		char dir[512];
-		getCurrentUserDir(dir, 512);
-		for (i = 0; i < 4; i++)
+        const char *dir;
+
+        if ((dir = getenv("HOME")) == NULL) {
+          dir = getpwuid(getuid())->pw_dir;
+        }
+        for (i = 0; i < 4; i++)
 			coeffProvPtr[i] = malloc(getCoeffSize());
 		// Load coeff
-		char file1[17] = "\\drum4stems.dat";
-		char file2[17] = "\\bass4stems.dat";
-		char file3[26] = "\\accompaniment4stems.dat";
-		char file4[17] = "\\vocal4stems.dat";
+		char file1[17] = "/drum4stems.dat";
+		char file2[17] = "/bass4stems.dat";
+		char file3[26] = "/accompaniment4stems.dat";
+		char file4[17] = "/vocal4stems.dat";
 		size_t len1 = strlen(dir);
 		size_t len2 = strlen(file1);
 		char *concat = (char*)malloc(len1 + len2 + 1);
@@ -87,7 +82,7 @@ public:
 		setLatencySamples(16384);
 		msr = 0;
 	}
-	MS5_1AI::~MS5_1AI()
+	~MS5_1AI()
 	{
 		Spleeter4StemsFree(msr);
 		if (coeffProvPtr[0])

@@ -4,6 +4,8 @@
 #include <math.h>
 #include <float.h>
 #include "codelet.h"
+#include <sys/stat.h>
+#include <sys/types.h>
 #include "Spleeter4Stems.h"
 unsigned int LLIntegerLog2(unsigned int v)
 {
@@ -471,6 +473,7 @@ void Spleeter4StemsInit(Spleeter4Stems *msr, int initSpectralBinLimit, int initT
 }
 void Spleeter4StemsFree(Spleeter4Stems *msr)
 {
+    if (msr){
 	if (!msr->needWait)
 	{
 		// Indicate we haven't run wake up the neural network thread for the first time
@@ -479,35 +482,35 @@ void Spleeter4StemsFree(Spleeter4Stems *msr)
 	}
 	else
 	{
-		for (int i = 0; i < TASK_NB; i++)
-		{
-			if (msr->shared_info[i].state == WORKING)
-				task_wait(msr, i);
-		}
-	}
-	thread_exitSpleeter4s(msr);
-	free(msr->maskPtr[0][0]);
-	free(msr->maskPtr[0][1]);
-	free(msr->maskPtr[0][2]);
-	free(msr->maskPtr[0][3]);
-	free(msr->maskPtr[1][0]);
-	free(msr->maskPtr[1][1]);
-	free(msr->maskPtr[1][2]);
-	free(msr->maskPtr[1][3]);
-	free(msr->nn[0]);
-	free(msr->nn[1]);
-	free(msr->nn[2]);
-	free(msr->nn[3]);
-	free(msr->tmpSpectro);
-	free(msr->magnitudeSpectrogram);
-	free(msr->complexSpectrogram[0][0]);
-	free(msr->complexSpectrogram[0][1]);
-	free(msr->complexSpectrogram[0][2]);
-	free(msr->complexSpectrogram[0][3]);
-	free(msr->complexSpectrogram[1][0]);
-	free(msr->complexSpectrogram[1][1]);
-	free(msr->complexSpectrogram[1][2]);
-	free(msr->complexSpectrogram[1][3]);
+          for (int i = 0; i < TASK_NB; i++) {
+            if (msr->shared_info[i].state == WORKING)
+              task_wait(msr, i);
+          }
+        }
+        thread_exitSpleeter4s(msr);
+        free(msr->maskPtr[0][0]);
+        free(msr->maskPtr[0][1]);
+        free(msr->maskPtr[0][2]);
+        free(msr->maskPtr[0][3]);
+        free(msr->maskPtr[1][0]);
+        free(msr->maskPtr[1][1]);
+        free(msr->maskPtr[1][2]);
+        free(msr->maskPtr[1][3]);
+        free(msr->nn[0]);
+        free(msr->nn[1]);
+        free(msr->nn[2]);
+        free(msr->nn[3]);
+        free(msr->tmpSpectro);
+        free(msr->magnitudeSpectrogram);
+        free(msr->complexSpectrogram[0][0]);
+        free(msr->complexSpectrogram[0][1]);
+        free(msr->complexSpectrogram[0][2]);
+        free(msr->complexSpectrogram[0][3]);
+        free(msr->complexSpectrogram[1][0]);
+        free(msr->complexSpectrogram[1][1]);
+        free(msr->complexSpectrogram[1][2]);
+        free(msr->complexSpectrogram[1][3]);
+    }
 }
 void Spleeter4StemsProcessSamples(Spleeter4Stems *msr, const float *inLeft, const float *inRight, int inSampleCount, float **components)
 {
